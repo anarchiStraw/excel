@@ -3,8 +3,9 @@ Excel2010 で作成・動作確認しています。
 
 # BookList.xlms
 ** 蔵書リストのシート(Amazonからタイトル等を取得するマクロ付き)。
-** Amazon.comのアクセスキー、アソシエイト・タグが必要です。
+***ISBN指定と、タイトル・作者・出版社で候補検索ができます。
+** 使うにはAmazon.comのアクセスキー、アソシエイト・タグが必要です。
 *** main.getSignedUrlFor に書いてあるダミー値を変更してください。
 *** "アクセスキー等の取得方法、参考にしたページ":http://anarchistraw.blogspot.com/2011/11/excel-vbaamazon-product-advertising-api.html
-** 2007以前のExcelでもたぶん動きます。(BookList/main.basとSHA.basをインポートしてください)
+** 2007以前のExcelでもたぶん動きます。(BookListディレクトリをダウンロードし、bas, frmをインポートしてください。)
 ** 2011/12/1 作成
