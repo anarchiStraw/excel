@@ -1,0 +1,8 @@
+ちょこっと便利なExcelマクロを作っていこうと思います。
+Excel2010 で作成・動作確認しています。
+
+# BookList
+** 蔵書リストのシートとマクロ。ISBNを入力してマクロを実行するとAmazonからタイトル等を取得して書き出します。
+** Amazon.comのアクセスキー、アソシエイト・タグが必要です。
+** 2007以前のExcelでもたぶん動きます。(basをインポートしてください)
+** 2011/12/1 作成 "参考にしたページ等":http://anarchistraw.blogspot.com/2011/11/excel-vbaamazon-product-advertising-api.html
