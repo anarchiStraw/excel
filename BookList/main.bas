@@ -101,6 +101,7 @@ Public Sub searchBookInfo()
     ws.Cells(r.Row, colPublisher).Value = maps(searchResult.Tag)("publisher")
     ws.Cells(r.Row, colPublicationDate).Value = maps(searchResult.Tag)("publicationDate")
     ws.Cells(r.Row, colBinding).Value = maps(searchResult.Tag)("binding")
+    Call bgColor(ws.Cells(r.Row, colIsbn), Null)
     Unload searchResult
     Exit Sub
 
@@ -108,6 +109,8 @@ ERROR_HANDLE:
     If Err.Number = 500 Then
         MsgBox ("データ取得できませんでした。理由：" & vbLf & Err.description)
         Call bgColor(ws.Cells(r.Row, colIsbn), xlThemeColorAccent3)
+        On Error GoTo 0
+        Exit Sub
     End If
     Error Err
 End Sub

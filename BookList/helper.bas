@@ -51,7 +51,7 @@ Function signedUrlFor( _
         Optional title As Variant, Optional author As Variant, Optional publisher As Variant, _
         Optional accessKey As Variant, Optional secretKey As Variant, Optional associateTag As Variant, Optional timestamp As Variant) As String
     Dim endpoint As String
-    endpoint = endpoints(CStr(asin))
+    endpoint = endpoints(IIf(IsMissing(asin), "4", CStr(asin)))
     
     Dim path As String
     path = "/onca/xml"
@@ -59,22 +59,22 @@ Function signedUrlFor( _
     Dim params As String
     params = "AWSAccessKeyId=" & IIf(IsMissing(accessKey), "yourAccessKey", accessKey) _
         & "&AssociateTag=" & IIf(IsMissing(associateTag), "yourAssociateTag", associateTag) _
-        & IIf(IsMissing(author), "", "&Author=" & urlEncode(CStr(author))) _
+        & IIf(IsMissing(author), "", "&Author=" & urlEncode(removeUnwantedChars(CStr(author)))) _
         & IIf(IsMissing(asin), "", "&ItemId=" & CStr(asin)) _
         & "&Operation=" & IIf(IsMissing(asin), "ItemSearch", "ItemLookup") _
-        & IIf(IsMissing(publisher), "", "&Publisher=" & urlEncode(CStr(publisher))) _
+        & IIf(IsMissing(publisher), "", "&Publisher=" & urlEncode(removeUnwantedChars(CStr(publisher)))) _
         & "&ResponseGroup=ItemAttributes" _
         & IIf(IsMissing(asin), "&SearchIndex=Books", "") _
         & "&Service=AWSECommerceService" _
         & "&Timestamp=" & urlEncode(IIf(IsMissing(timestamp), Format(Now, "yyyy-mm-ddThh:MM:ss+0900"), timestamp)) _
-        & IIf(IsMissing(title), "", "&Title=" & urlEncode(CStr(title))) _
+        & IIf(IsMissing(title), "", "&Title=" & urlEncode(removeUnwantedChars(CStr(title)))) _
         & "&Version=2011-08-01"
     
     Dim stringToSign As String
     stringToSign = "GET" & vbLf & endpoint & vbLf & path & vbLf & params
     
     signedUrlFor = "http://" & endpoint & path & "?" & params _
-                & "&Signature=" & getSignature(stringToSign, IIf(IsMissing(secretKey), "yourSecretKey", secretKey))
+                & "&Signature=" & getSignature(stringToSign, IIf(IsMissing(secretKey), "aIBZUSvQZ8Y15hTbHmZjAcTQDveTdBvaCv1uyBdj", secretKey))
     Debug.Print signedUrlFor
 
 End Function
@@ -203,12 +203,16 @@ End Function
 Function getAttributeMaps(xdoc As MSXML2.DOMDocument) As Variant
 
     If (0 < InStr(1, xdoc.SelectSingleNode("/*/Items/Request").xml, "<Error")) Then
-        Dim description As String
-        description = xdoc.SelectSingleNode("/*/Items/Request/Errors/Error[0]/Message").text
-        If (0 < InStr(1, description, "ItemId‚Ì’l‚Æ‚µ‚Ä–³Œø‚Å‚·")) Then
-            description = "‚±‚ÌISBN‚Í³‚µ‚­‚È‚¢‚©AAmazon‚É“o˜^‚³‚ê‚Ä‚¢‚Ü‚¹‚ñB"
+        Dim code, message As String
+        code = xdoc.SelectSingleNode("/*/Items/Request/Errors/Error[0]/Code").text
+        If (0 < InStr(1, code, "AWS.ECommerceService.NoExactMatches")) Then
+            message = "ŒŸõŒ‹‰Ê‚ª‚ ‚è‚Ü‚¹‚ñB"
+        ElseIf (0 < InStr(1, code, "AWS.InvalidParameterValue")) Then
+            message = "‚±‚ÌISBN‚Í³‚µ‚­‚È‚¢‚©AAmazon‚É“o˜^‚³‚ê‚Ä‚¢‚Ü‚¹‚ñB"
+        Else
+            message = xdoc.SelectSingleNode("/*/Items/Request/Errors/Error[0]/Message").text
         End If
-        Err.Raise Number:=500, description:=xdoc.SelectSingleNode("/*/Items/Request/Errors/Error[0]/Message").text
+        Err.Raise Number:=500, description:=message
     End If
     
     Dim itemNodes As MSXML2.IXMLDOMNodeList
@@ -271,4 +275,12 @@ Function bgColor(r As Range, color As Variant)
 
 End Function
 
-
+Function removeUnwantedChars(str As String) As String
+    Dim RE As Variant
+    Set RE = CreateObject("VBScript.RegExp")
+    With RE
+        .Pattern = "[()*!']"
+        .Global = True
+    End With
+    removeUnwantedChars = RE.Replace(str, "")
+End Function
