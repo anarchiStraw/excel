@@ -59,22 +59,22 @@ Function signedUrlFor( _
     Dim params As String
     params = "AWSAccessKeyId=" & IIf(IsMissing(accessKey), "yourAccessKey", accessKey) _
         & "&AssociateTag=" & IIf(IsMissing(associateTag), "yourAssociateTag", associateTag) _
-        & IIf(IsMissing(author), "", "&Author=" & urlEncode(removeUnwantedChars(CStr(author)))) _
+        & IIf(IsMissing(author), "", "&Author=" & urlEncode(CStr(author))) _
         & IIf(IsMissing(asin), "", "&ItemId=" & CStr(asin)) _
         & "&Operation=" & IIf(IsMissing(asin), "ItemSearch", "ItemLookup") _
-        & IIf(IsMissing(publisher), "", "&Publisher=" & urlEncode(removeUnwantedChars(CStr(publisher)))) _
+        & IIf(IsMissing(publisher), "", "&Publisher=" & urlEncode(CStr(publisher))) _
         & "&ResponseGroup=ItemAttributes" _
         & IIf(IsMissing(asin), "&SearchIndex=Books", "") _
         & "&Service=AWSECommerceService" _
         & "&Timestamp=" & urlEncode(IIf(IsMissing(timestamp), Format(Now, "yyyy-mm-ddThh:MM:ss+0900"), timestamp)) _
-        & IIf(IsMissing(title), "", "&Title=" & urlEncode(removeUnwantedChars(CStr(title)))) _
+        & IIf(IsMissing(title), "", "&Title=" & urlEncode(CStr(title))) _
         & "&Version=2011-08-01"
     
     Dim stringToSign As String
     stringToSign = "GET" & vbLf & endpoint & vbLf & path & vbLf & params
     
     signedUrlFor = "http://" & endpoint & path & "?" & params _
-                & "&Signature=" & getSignature(stringToSign, IIf(IsMissing(secretKey), "aIBZUSvQZ8Y15hTbHmZjAcTQDveTdBvaCv1uyBdj", secretKey))
+                & "&Signature=" & getSignature(stringToSign, IIf(IsMissing(secretKey), "yourSecretKey", secretKey))
     Debug.Print signedUrlFor
 
 End Function
@@ -185,7 +185,7 @@ Function urlEncode(str As String) As String
     Dim sc As Variant
     Set sc = CreateObject("ScriptControl")
     sc.Language = "Jscript"
-    urlEncode = sc.CodeObject.encodeURIComponent(str)
+    urlEncode = Replace(Replace(Replace(Replace(sc.CodeObject.encodeURIComponent(str), "!", "%21"), "(", "%28"), ")", "%29"), "*", "%2A")
 End Function
 
 Function load(url As String) As MSXML2.DOMDocument
@@ -273,14 +273,4 @@ Function bgColor(r As Range, color As Variant)
         End If
     End With
 
-End Function
-
-Function removeUnwantedChars(str As String) As String
-    Dim RE As Variant
-    Set RE = CreateObject("VBScript.RegExp")
-    With RE
-        .Pattern = "[()*!']"
-        .Global = True
-    End With
-    removeUnwantedChars = RE.Replace(str, "")
 End Function
