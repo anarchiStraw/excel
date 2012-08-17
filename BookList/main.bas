@@ -10,6 +10,14 @@ Const colCreators = 4
 Const colPublisher = 5
 Const colPublicationDate = 6
 Const colBinding = 7
+Const colNote = 8
+Const colPages = 9
+Const colCurrencyCode = 10
+Const colListPrice = 11
+Const colLowestNewPrice = 12
+Const colLowestUsedPrice = 13
+Const colLowestCollectiblePrice = 14
+Const colSalesRank = 15
 
 ' ステータスバーに表示する進捗状況の桁
 Const progressDigit = 20
@@ -26,9 +34,9 @@ Public Sub setBookInfo()
     Dim xdoc As MSXML2.DOMDocument
     Dim itemAttributes As MSXML2.IXMLDOMNode
     
-    For i = r.Row To (r.Row + r.Rows.Count - 1)
+    For i = r.row To (r.row + r.Rows.Count - 1)
         If (progressDigit <= r.Rows.Count) Then ' 少ない件数ならわざわざ表示しない
-            Call showProgress((i - r.Row + 1), r.Rows.Count)
+            Call showProgress((i - r.row + 1), r.Rows.Count)
         End If
         
         asin = toAsin(ws.Cells(i, colIsbn))
@@ -42,14 +50,7 @@ Public Sub setBookInfo()
             maps = getAttributeMaps(load(signedUrlFor(asin:=asin)))
             On Error GoTo 0
             
-            ws.Cells(i, colTitle).Value = maps(0)("title")
-            ws.Cells(i, colAuthor).Value = maps(0)("author")
-            ws.Cells(i, colCreators).Value = maps(0)("creators")
-            ws.Cells(i, colPublisher).Value = maps(0)("publisher")
-            ws.Cells(i, colPublicationDate).Value = maps(0)("publicationDate")
-            ws.Cells(i, colBinding).Value = maps(0)("binding")
-            
-            Call bgColor(ws.Cells(i, colIsbn), Null)
+            pasteValues ws, i, maps(0)
         End If
 NEXT_ROW:
     Next
@@ -75,9 +76,9 @@ Public Sub searchBookInfo()
     Dim strTitle As String
     Dim strAuthor As String
     Dim strPublisher As String
-    strTitle = Trim(ws.Cells(r.Row, colTitle).Value)
-    strAuthor = Trim(ws.Cells(r.Row, colAuthor).Value)
-    strPublisher = Trim(ws.Cells(r.Row, colPublisher).Value)
+    strTitle = Trim(ws.Cells(r.row, colTitle).Value)
+    strAuthor = Trim(ws.Cells(r.row, colAuthor).Value)
+    strPublisher = Trim(ws.Cells(r.row, colPublisher).Value)
     If (strTitle = "" And strAuthor = "" And strPublisher = "") Then
         MsgBox ("タイトル、作者、出版社 いずれかは入力してください。")
         Exit Sub
@@ -94,23 +95,36 @@ Public Sub searchBookInfo()
         Unload searchResult
         Exit Sub
     End If
-    ws.Cells(r.Row, colIsbn).Value = maps(searchResult.Tag)("ean")
-    ws.Cells(r.Row, colTitle).Value = maps(searchResult.Tag)("title")
-    ws.Cells(r.Row, colAuthor).Value = maps(searchResult.Tag)("author")
-    ws.Cells(r.Row, colCreators).Value = maps(searchResult.Tag)("creators")
-    ws.Cells(r.Row, colPublisher).Value = maps(searchResult.Tag)("publisher")
-    ws.Cells(r.Row, colPublicationDate).Value = maps(searchResult.Tag)("publicationDate")
-    ws.Cells(r.Row, colBinding).Value = maps(searchResult.Tag)("binding")
-    Call bgColor(ws.Cells(r.Row, colIsbn), Null)
+    pasteValues ws, r.row, maps(searchResult.Tag)
     Unload searchResult
     Exit Sub
 
 ERROR_HANDLE:
     If Err.Number = 500 Then
         MsgBox ("データ取得できませんでした。理由：" & vbLf & Err.description)
-        Call bgColor(ws.Cells(r.Row, colIsbn), xlThemeColorAccent3)
+        Call bgColor(ws.Cells(r.row, colIsbn), xlThemeColorAccent3)
         On Error GoTo 0
         Exit Sub
     End If
     Error Err
 End Sub
+
+Private Function pasteValues(ws As Worksheet, row As Integer, map As Variant)
+    ws.Cells(row, colIsbn).Value = map("ean")
+    ws.Cells(row, colTitle).Value = map("title")
+    ws.Cells(row, colAuthor).Value = map("author")
+    ws.Cells(row, colCreators).Value = map("creators")
+    ws.Cells(row, colPublisher).Value = map("publisher")
+    ws.Cells(row, colPublicationDate).Value = map("publicationDate")
+    ws.Cells(row, colBinding).Value = map("binding")
+
+    ws.Cells(row, colPages).Value = map("pages")
+    ws.Cells(row, colCurrencyCode).Value = map("currencyCode")
+    ws.Cells(row, colListPrice).Value = map("listPrice")
+    ws.Cells(row, colLowestNewPrice).Value = map("lowestNewPrice")
+    ws.Cells(row, colLowestUsedPrice).Value = map("lowestUsedPrice")
+    ws.Cells(row, colLowestCollectiblePrice).Value = map("lowestCollectiblePrice")
+    ws.Cells(row, colSalesRank).Value = map("salesRank")
+    
+    Call bgColor(ws.Cells(row, colIsbn), Null)
+End Function
