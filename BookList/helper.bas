@@ -2,7 +2,8 @@ Attribute VB_Name = "helper"
 Option Explicit
 
 Function showProgress(current As Integer, all As Integer)
-    Dim progress As Integer
+    Dim progress, progressDigit As Integer
+    progressDigit = 20
     progress = WorksheetFunction.Round(progressDigit * (current / all), 0)
     Application.StatusBar = "èàóùíÜ(" & current & "/" & all & ") " _
         & WorksheetFunction.Rept("|", progress) _
@@ -63,7 +64,7 @@ Function signedUrlFor( _
         & IIf(IsMissing(asin), "", "&ItemId=" & CStr(asin)) _
         & "&Operation=" & IIf(IsMissing(asin), "ItemSearch", "ItemLookup") _
         & IIf(IsMissing(publisher), "", "&Publisher=" & urlEncode(CStr(publisher))) _
-        & "&ResponseGroup=ItemAttributes" _
+        & "&ResponseGroup=Large" _
         & IIf(IsMissing(asin), "&SearchIndex=Books", "") _
         & "&Service=AWSECommerceService" _
         & "&Timestamp=" & urlEncode(IIf(IsMissing(timestamp), Format(Now, "yyyy-mm-ddThh:MM:ss+0900"), timestamp)) _
@@ -250,6 +251,18 @@ Function getAttributeMaps(xdoc As MSXML2.DOMDocument) As Variant
         map.Add "publicationDate", attributesNode.SelectSingleNode("PublicationDate").text
         map.Add "binding", attributesNode.SelectSingleNode("Binding").text
         map.Add "ean", attributesNode.SelectSingleNode("EAN").text
+        
+        map.Add "pages", attributesNode.SelectSingleNode("NumberOfPages").text
+        map.Add "listPrice", attributesNode.SelectSingleNode("ListPrice/Amount").text
+        map.Add "currencyCode", attributesNode.SelectSingleNode("ListPrice/CurrencyCode").text
+        
+        Dim offerSummaryNode As MSXML2.IXMLDOMNode
+        Set offerSummaryNode = itemNodes(i).SelectSingleNode("OfferSummary")
+        map.Add "lowestNewPrice", offerSummaryNode.SelectSingleNode("LowestNewPrice/Amount").text
+        map.Add "lowestUsedPrice", offerSummaryNode.SelectSingleNode("LowestUsedPrice/Amount").text
+        map.Add "lowestCollectiblePrice", offerSummaryNode.SelectSingleNode("LowestCollectiblePrice/Amount").text
+        
+        map.Add "salesRank", itemNodes(i).SelectSingleNode("SalesRank").text
         
         On Error GoTo 0
         Set maps(i) = map
