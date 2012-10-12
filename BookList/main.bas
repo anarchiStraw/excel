@@ -129,3 +129,7 @@ Private Function pasteValues(ws As Worksheet, row As Integer, map As Variant)
     
     Call bgColor(ws.Cells(row, colIsbn), Null)
 End Function
+
+Public Sub autoExecSetBookInfo()
+    isbnInputForm.Show
+End Sub
