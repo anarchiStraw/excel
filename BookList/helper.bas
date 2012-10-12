@@ -3,6 +3,8 @@ Option Explicit
 
 Function showProgress(current As Integer, all As Integer)
     Dim progress As Integer
+    Dim progressDigit As Integer
+    progressDigit = 10
     progress = WorksheetFunction.Round(progressDigit * (current / all), 0)
     Application.StatusBar = "処理中(" & current & "/" & all & ") " _
         & WorksheetFunction.Rept("|", progress) _
@@ -47,12 +49,14 @@ End Function
 ' accessKey以降はテスト用。
 ' 実際使うときは引数ではなくfunction内の yourAccessKey, yourSecretKey, yourAssociateTag を正しい値に書き換えてください。
 Function signedUrlFor( _
+        Optional endpoint As Variant, _
         Optional asin As Variant, _
         Optional title As Variant, Optional author As Variant, Optional publisher As Variant, _
         Optional accessKey As Variant, Optional secretKey As Variant, Optional associateTag As Variant, Optional timestamp As Variant) As String
-    Dim endpoint As String
-    endpoint = endpoints(IIf(IsMissing(asin), "4", CStr(asin)))
-    
+    If IsMissing(endpoint) Then
+        endpoint = endpoints(IIf(IsMissing(asin), "4", CStr(asin)))
+    End If
+
     Dim path As String
     path = "/onca/xml"
     
@@ -84,20 +88,48 @@ Function endpoints(asin As String) As String
     countryNumber = CInt(IIf(CInt(Left(asin, 1)) <= 7, Left(asin, 1), Left(asin, 2)))
     Select Case countryNumber
     Case 2
-        endpoints = "ecs.amazonaws.fr"
+        endpoints = amazonFr
     Case 3
-        endpoints = "ecs.amazonaws.de"
+        endpoints = amazonDe
     Case 4
-        endpoints = "ecs.amazonaws.jp"
+        endpoints = amazonJp
     Case 7
-        endpoints = "webservices.amazon.cn"
+        endpoints = amazonCn
     Case 84
-        endpoints = "webservices.amazon.es"
+        endpoints = amazonEs
     Case 88
-        endpoints = "webservices.amazon.it"
+        endpoints = amazonIt
     Case Else
-        endpoints = "webservices.amazon.com"
+        endpoints = amazonCom
     End Select
+End Function
+
+Function amazonFr() As String
+    amazonFr = "ecs.amazonaws.fr"
+End Function
+
+Function amazonDe() As String
+    amazonDe = "ecs.amazonaws.de"
+End Function
+
+Function amazonJp() As String
+    amazonJp = "ecs.amazonaws.jp"
+End Function
+
+Function amazonCn() As String
+    amazonCn = "webservices.amazon.cn"
+End Function
+
+Function amazonEs() As String
+    amazonEs = "webservices.amazon.es"
+End Function
+
+Function amazonIt() As String
+    amazonIt = "webservices.amazon.it"
+End Function
+
+Function amazonCom() As String
+    amazonCom = "webservices.amazon.com"
 End Function
 
 ' この関数はプラプラさんが
