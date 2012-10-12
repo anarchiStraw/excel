@@ -9,3 +9,4 @@ Excel2010 で作成・動作確認しています。
 *** "アクセスキー等の取得方法、参考にしたページ":http://anarchistraw.blogspot.com/2011/11/excel-vbaamazon-product-advertising-api.html
 ** 2007以前のExcelでもたぶん動きます。(BookListディレクトリをダウンロードし、bas, frmをインポートしてください。)
 ** 2011/12/1 作成
+** 2012/10/12 ISBN検索の連続実行と、タイトル等での候補検索を日本以外のAmazonで実行できるようにしました。
