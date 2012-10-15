@@ -69,7 +69,7 @@ Public Sub searchBookInfoFromAmazonEs(dummy As Integer)
     searchBookInfo (amazonEs)
 End Sub
 
-Public Sub searchBookInfo(Optional endpoint As String)
+Public Sub searchBookInfo(Optional endpoint As Variant)
     If IsMissing(endpoint) Then
         endpoint = amazonJp
     End If
