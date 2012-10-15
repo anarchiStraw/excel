@@ -123,11 +123,25 @@ Private Function pasteValues(ws As Worksheet, row As Integer, map As Variant)
     ws.Cells(row, colAuthor).Value = map("author")
     ws.Cells(row, colCreators).Value = map("creators")
     ws.Cells(row, colPublisher).Value = map("publisher")
-    ws.Cells(row, colPublicationDate).Value = map("publicationDate")
+    Dim publicationDate As String
+    ' 年4ケタのみ、などの場合、Excelが「日付値」と勘違いするのでハイフンをくっつける
+    publicationDate = map("publicationDate")
+    ws.Cells(row, colPublicationDate).Value = IIf(isNumber(publicationDate), publicationDate & "-", publicationDate)
     ws.Cells(row, colBinding).Value = map("binding")
 
     
     Call bgColor(ws.Cells(row, colIsbn), Null)
+End Function
+
+Private Function isNumber(var As String) As Boolean
+    On Error GoTo NOT_A_NUMBER
+    Dim i As Integer
+    i = CInt(var)
+    isNumber = True
+    Exit Function
+NOT_A_NUMBER:
+    On Error GoTo 0
+    isNumber = False
 End Function
 
 Public Sub autoExecSetBookInfo()
