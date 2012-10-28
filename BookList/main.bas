@@ -15,6 +15,7 @@ Const colBinding = 7
 Const progressDigit = 20
 
 Public Sub setBookInfo()
+debugPrint "setBookInfo START -----------------"
     Dim ws As Worksheet
     Set ws = ActiveSheet
     
@@ -41,8 +42,10 @@ Public Sub setBookInfo()
             On Error GoTo ERROR_HANDLE
             maps = getAttributeMaps(load(signedUrlFor(asin:=asin)))
             On Error GoTo 0
-            
+debugPrint "creating attribute map done."
+
             pasteValues ws, i, maps(0)
+debugPrint "pasteValues done."
         End If
 NEXT_ROW:
     Next
@@ -50,7 +53,7 @@ NEXT_ROW:
 
 ERROR_HANDLE:
     If Err.Number = 500 Then
-        MsgBox ("行 [" & i & "] データ取得できませんでした。理由：" & vbLf & Err.description)
+        MsgBox ("行 [" & i & "] データ取得できませんでした。理由：" & vbLf & Err.Description)
         Call bgColor(ws.Cells(i, colIsbn), xlThemeColorAccent3)
         GoTo NEXT_ROW
     End If
@@ -109,7 +112,7 @@ Public Sub searchBookInfo(Optional endpoint As Variant)
 
 ERROR_HANDLE:
     If Err.Number = 500 Then
-        MsgBox ("データ取得できませんでした。理由：" & vbLf & Err.description)
+        MsgBox ("データ取得できませんでした。理由：" & vbLf & Err.Description)
         Call bgColor(ws.Cells(r.row, colIsbn), xlThemeColorAccent3)
         On Error GoTo 0
         Exit Sub

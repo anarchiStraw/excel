@@ -1,6 +1,13 @@
 Attribute VB_Name = "helper"
 Option Explicit
 
+Const DEBUG_LOG = False
+Function debugPrint(message As String)
+    If DEBUG_LOG Then
+        Debug.Print message
+    End If
+End Function
+
 Function showProgress(current As Integer, all As Integer)
     Dim progress As Integer
     Dim progressDigit As Integer
@@ -207,7 +214,7 @@ Function EncodeBase64(src() As Byte) As String
 
   objNode.DataType = "bin.base64"
   objNode.nodeTypedValue = src
-  EncodeBase64 = objNode.text
+  EncodeBase64 = objNode.Text
 
   Set objNode = Nothing
   Set objXML = Nothing
@@ -223,12 +230,22 @@ End Function
 Function load(url As String) As MSXML2.DOMDocument
     Dim xdoc As MSXML2.DOMDocument
     Set xdoc = New MSXML2.DOMDocument
+    Dim tried As Integer
+    tried = 0
     
     xdoc.async = False
     'エラー対策 http://support.microsoft.com/kb/281142/ja
     xdoc.setProperty "ServerHTTPRequest", True
- 
-    xdoc.load (url)
+    Do
+        If (tried > 0) Then
+            debugPrint "trying " & tried
+        End If
+        xdoc.load (url)
+        tried = tried + 1
+    Loop While (xdoc.XML = "" And tried < 3)
+    If xdoc.XML = "" Then
+        Err.Raise Number:=500, Description:="XMLを取得できませんでした(再実行すれば取得できるかもしれません)。"
+    End If
     Set load = xdoc
 End Function
 
@@ -236,15 +253,15 @@ Function getAttributeMaps(xdoc As MSXML2.DOMDocument) As Variant
 
     If (0 < InStr(1, xdoc.SelectSingleNode("/*/Items/Request").xml, "<Error")) Then
         Dim code, message As String
-        code = xdoc.SelectSingleNode("/*/Items/Request/Errors/Error[0]/Code").text
+        code = xdoc.SelectSingleNode("/*/Items/Request/Errors/Error[0]/Code").Text
         If (0 < InStr(1, code, "AWS.ECommerceService.NoExactMatches")) Then
             message = "検索結果がありません。"
         ElseIf (0 < InStr(1, code, "AWS.InvalidParameterValue")) Then
             message = "このISBNは正しくないか、Amazonに登録されていません。"
         Else
-            message = xdoc.SelectSingleNode("/*/Items/Request/Errors/Error[0]/Message").text
+            message = xdoc.SelectSingleNode("/*/Items/Request/Errors/Error[0]/Message").Text
         End If
-        Err.Raise Number:=500, description:=message
+        Err.Raise Number:=500, Description:=message
     End If
     
     Dim itemNodes As MSXML2.IXMLDOMNodeList
@@ -264,24 +281,23 @@ Function getAttributeMaps(xdoc As MSXML2.DOMDocument) As Variant
         Dim map As Object
         Set map = CreateObject("Scripting.Dictionary")
         
-        map.Add "title", attributesNode.SelectSingleNode("Title").text
-        map.Add "author", attributesNode.SelectSingleNode("Author[0]").text
-                
+        map.Add "title", attributesNode.SelectSingleNode("Title").Text
+        map.Add "author", attributesNode.SelectSingleNode("Author[0]").Text
         Dim creators As String
         creators = ""
         Dim n As MSXML2.IXMLDOMNode
         For Each n In attributesNode.SelectNodes("Creator")
-            creators = creators & n.text & "(" & n.attributes.getNamedItem("Role").text & "), "
+            creators = creators & n.Text & "(" & n.attributes.getNamedItem("Role").Text & "), "
         Next
         If (0 < Len(creators)) Then
             creators = Left(creators, (Len(creators) - 2)) ' 最後のカンマとスペース不要
         End If
         map.Add "creators", creators
         
-        map.Add "publisher", attributesNode.SelectSingleNode("Publisher").text
-        map.Add "publicationDate", attributesNode.SelectSingleNode("PublicationDate").text
-        map.Add "binding", attributesNode.SelectSingleNode("Binding").text
-        map.Add "ean", attributesNode.SelectSingleNode("EAN").text
+        map.Add "publisher", attributesNode.SelectSingleNode("Publisher").Text
+        map.Add "publicationDate", attributesNode.SelectSingleNode("PublicationDate").Text
+        map.Add "binding", attributesNode.SelectSingleNode("Binding").Text
+        map.Add "ean", attributesNode.SelectSingleNode("EAN").Text
         
         On Error GoTo 0
         Set maps(i) = map
