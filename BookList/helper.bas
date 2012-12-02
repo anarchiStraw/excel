@@ -50,7 +50,7 @@ Function toAsin(isbn As String) As String
 End Function
 
 ' Amazonデータ取得URL生成
-' asin または (title, author, publisher) を指定する。
+' asin または (title, director, actor) を指定する。
 ' asinが指定されればItemLookup、指定されなければItemSearch のURLを返す。
 '
 ' accessKey以降はテスト用。
@@ -58,7 +58,7 @@ End Function
 Function signedUrlFor( _
         Optional endpoint As Variant, _
         Optional asin As Variant, _
-        Optional title As Variant, Optional author As Variant, Optional publisher As Variant, _
+        Optional title As Variant, Optional director As Variant, Optional actor As Variant, _
         Optional accessKey As Variant, Optional secretKey As Variant, Optional associateTag As Variant, Optional timestamp As Variant) As String
     If IsMissing(endpoint) Then
         endpoint = endpoints(IIf(IsMissing(asin), "4", CStr(asin)))
@@ -69,13 +69,14 @@ Function signedUrlFor( _
     
     Dim params As String
     params = "AWSAccessKeyId=" & IIf(IsMissing(accessKey), "yourAccessKey", accessKey) _
+        & IIf(IsMissing(actor), "", "&Actor=" & urlEncode(CStr(actor))) _
         & "&AssociateTag=" & IIf(IsMissing(associateTag), "yourAssociateTag", associateTag) _
-        & IIf(IsMissing(author), "", "&Author=" & urlEncode(CStr(author))) _
+        & IIf(IsMissing(director), "", "&Director=" & urlEncode(CStr(director))) _
+        & IIf(IsMissing(asin), "", "&IdType=EAN") _
         & IIf(IsMissing(asin), "", "&ItemId=" & CStr(asin)) _
         & "&Operation=" & IIf(IsMissing(asin), "ItemSearch", "ItemLookup") _
-        & IIf(IsMissing(publisher), "", "&Publisher=" & urlEncode(CStr(publisher))) _
         & "&ResponseGroup=ItemAttributes" _
-        & IIf(IsMissing(asin), "&SearchIndex=Books", "") _
+        & "&SearchIndex=DVD" _
         & "&Service=AWSECommerceService" _
         & "&Timestamp=" & urlEncode(IIf(IsMissing(timestamp), Format(Now, "yyyy-mm-ddThh:MM:ss+0900"), timestamp)) _
         & IIf(IsMissing(title), "", "&Title=" & urlEncode(CStr(title))) _
@@ -214,7 +215,7 @@ Function EncodeBase64(src() As Byte) As String
 
   objNode.DataType = "bin.base64"
   objNode.nodeTypedValue = src
-  EncodeBase64 = objNode.Text
+  EncodeBase64 = objNode.text
 
   Set objNode = Nothing
   Set objXML = Nothing
@@ -242,9 +243,9 @@ Function load(url As String) As MSXML2.DOMDocument
         End If
         xdoc.load (url)
         tried = tried + 1
-    Loop While (xdoc.XML = "" And tried < 3)
-    If xdoc.XML = "" Then
-        Err.Raise Number:=500, Description:="XMLを取得できませんでした(再実行すれば取得できるかもしれません)。"
+    Loop While (xdoc.xml = "" And tried < 3)
+    If xdoc.xml = "" Then
+        Err.Raise Number:=500, description:="XMLを取得できませんでした(再実行すれば取得できるかもしれません)。"
     End If
     Set load = xdoc
 End Function
@@ -253,15 +254,15 @@ Function getAttributeMaps(xdoc As MSXML2.DOMDocument) As Variant
 
     If (0 < InStr(1, xdoc.SelectSingleNode("/*/Items/Request").xml, "<Error")) Then
         Dim code, message As String
-        code = xdoc.SelectSingleNode("/*/Items/Request/Errors/Error[0]/Code").Text
+        code = xdoc.SelectSingleNode("/*/Items/Request/Errors/Error[0]/Code").text
         If (0 < InStr(1, code, "AWS.ECommerceService.NoExactMatches")) Then
             message = "検索結果がありません。"
         ElseIf (0 < InStr(1, code, "AWS.InvalidParameterValue")) Then
             message = "このISBNは正しくないか、Amazonに登録されていません。"
         Else
-            message = xdoc.SelectSingleNode("/*/Items/Request/Errors/Error[0]/Message").Text
+            message = xdoc.SelectSingleNode("/*/Items/Request/Errors/Error[0]/Message").text
         End If
-        Err.Raise Number:=500, Description:=message
+        Err.Raise Number:=500, description:=message
     End If
     
     Dim itemNodes As MSXML2.IXMLDOMNodeList
@@ -281,23 +282,23 @@ Function getAttributeMaps(xdoc As MSXML2.DOMDocument) As Variant
         Dim map As Object
         Set map = CreateObject("Scripting.Dictionary")
         
-        map.Add "title", attributesNode.SelectSingleNode("Title").Text
-        map.Add "author", attributesNode.SelectSingleNode("Author[0]").Text
-        Dim creators As String
-        creators = ""
+        map.Add "title", attributesNode.SelectSingleNode("Title").text
+        map.Add "director", attributesNode.SelectSingleNode("Director[0]").text
+        Dim actors As String
+        actors = ""
         Dim n As MSXML2.IXMLDOMNode
-        For Each n In attributesNode.SelectNodes("Creator")
-            creators = creators & n.Text & "(" & n.attributes.getNamedItem("Role").Text & "), "
+        For Each n In attributesNode.SelectNodes("Actor")
+            actors = actors & n.text & ", "
         Next
-        If (0 < Len(creators)) Then
-            creators = Left(creators, (Len(creators) - 2)) ' 最後のカンマとスペース不要
+        If (0 < Len(actors)) Then
+            actors = Left(actors, (Len(actors) - 2)) ' 最後のカンマとスペース不要
         End If
-        map.Add "creators", creators
+        map.Add "actors", actors
         
-        map.Add "publisher", attributesNode.SelectSingleNode("Publisher").Text
-        map.Add "publicationDate", attributesNode.SelectSingleNode("PublicationDate").Text
-        map.Add "binding", attributesNode.SelectSingleNode("Binding").Text
-        map.Add "ean", attributesNode.SelectSingleNode("EAN").Text
+        map.Add "publisher", attributesNode.SelectSingleNode("Publisher").text
+        map.Add "releaseDate", attributesNode.SelectSingleNode("ReleaseDate").text
+        map.Add "binding", attributesNode.SelectSingleNode("Binding").text
+        map.Add "ean", attributesNode.SelectSingleNode("EAN").text
         
         On Error GoTo 0
         Set maps(i) = map

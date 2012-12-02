@@ -5,10 +5,10 @@ Option Explicit
 ' Excelシートのレイアウトを変えたら、この値も合わせて変える必要があります。
 Const colIsbn = 1
 Const colTitle = 2
-Const colAuthor = 3
-Const colCreators = 4
+Const colDirector = 3
+Const colActors = 4
 Const colPublisher = 5
-Const colPublicationDate = 6
+Const colReleaseDate = 6
 Const colBinding = 7
 
 ' ステータスバーに表示する進捗状況の桁
@@ -32,7 +32,8 @@ debugPrint "setBookInfo START -----------------"
             Call showProgress((i - r.row + 1), r.Rows.Count)
         End If
         
-        asin = toAsin(ws.Cells(i, colIsbn))
+        'asin = toAsin(ws.Cells(i, colIsbn))
+        asin = ws.Cells(i, colIsbn)
         If (asin = "") Then
             Call bgColor(ws.Cells(i, colIsbn), xlThemeColorAccent6)
             MsgBox ("行 [" & i & "] ISBNが正しく入力されていないようです。飛ばします。")
@@ -53,7 +54,7 @@ NEXT_ROW:
 
 ERROR_HANDLE:
     If Err.Number = 500 Then
-        MsgBox ("行 [" & i & "] データ取得できませんでした。理由：" & vbLf & Err.Description)
+        MsgBox ("行 [" & i & "] データ取得できませんでした。理由：" & vbLf & Err.description)
         Call bgColor(ws.Cells(i, colIsbn), xlThemeColorAccent3)
         GoTo NEXT_ROW
     End If
@@ -85,22 +86,22 @@ Public Sub searchBookInfo(Optional endpoint As Variant)
         
     ' タイトル～出版社、入力されていたら条件に足す
     Dim strTitle As String
-    Dim strAuthor As String
-    Dim strPublisher As String
+    Dim strDirector As String
+    Dim strActor As String
     strTitle = Trim(ws.Cells(r.row, colTitle).Value)
-    strAuthor = Trim(ws.Cells(r.row, colAuthor).Value)
-    strPublisher = Trim(ws.Cells(r.row, colPublisher).Value)
-    If (strTitle = "" And strAuthor = "" And strPublisher = "") Then
+    strDirector = Trim(ws.Cells(r.row, colDirector).Value)
+    strActor = Trim(ws.Cells(r.row, colPublisher).Value)
+    If (strTitle = "" And strDirector = "" And strActor = "") Then
         MsgBox ("タイトル、作者、出版社 いずれかは入力してください。")
         Exit Sub
     End If
     
     Dim maps() As Variant
     On Error GoTo ERROR_HANDLE
-    maps = getAttributeMaps(load(signedUrlFor(endpoint:=endpoint, title:=strTitle, author:=strAuthor, publisher:=strPublisher)))
+    maps = getAttributeMaps(load(signedUrlFor(endpoint:=endpoint, title:=strTitle, director:=strDirector, actor:=strActor)))
     On Error GoTo 0
     
-    Call searchResult.initialize(title:=strTitle, author:=strAuthor, publisher:=strPublisher, results:=maps)
+    Call searchResult.initialize(title:=strTitle, director:=strDirector, actor:=strActor, results:=maps)
     searchResult.Show
     If (searchResult.Tag = "cancel") Then
         Unload searchResult
@@ -112,7 +113,7 @@ Public Sub searchBookInfo(Optional endpoint As Variant)
 
 ERROR_HANDLE:
     If Err.Number = 500 Then
-        MsgBox ("データ取得できませんでした。理由：" & vbLf & Err.Description)
+        MsgBox ("データ取得できませんでした。理由：" & vbLf & Err.description)
         Call bgColor(ws.Cells(r.row, colIsbn), xlThemeColorAccent3)
         On Error GoTo 0
         Exit Sub
@@ -123,13 +124,13 @@ End Sub
 Private Function pasteValues(ws As Worksheet, row As Integer, map As Variant)
     ws.Cells(row, colIsbn).Value = map("ean")
     ws.Cells(row, colTitle).Value = map("title")
-    ws.Cells(row, colAuthor).Value = map("author")
-    ws.Cells(row, colCreators).Value = map("creators")
+    ws.Cells(row, colDirector).Value = map("director")
+    ws.Cells(row, colActors).Value = map("actors")
     ws.Cells(row, colPublisher).Value = map("publisher")
-    Dim publicationDate As String
+    Dim releaseDate As String
     ' 年4ケタのみ、などの場合、Excelが「日付値」と勘違いするのでハイフンをくっつける
-    publicationDate = map("publicationDate")
-    ws.Cells(row, colPublicationDate).Value = IIf(isNumber(publicationDate), publicationDate & "-", publicationDate)
+    releaseDate = map("releaseDate")
+    ws.Cells(row, colReleaseDate).Value = IIf(isNumber(releaseDate), releaseDate & "-", releaseDate)
     ws.Cells(row, colBinding).Value = map("binding")
 
     
